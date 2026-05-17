@@ -3,6 +3,7 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Swal from "sweetalert2";
 
 export default function TeacherPage() {
   const [teachers, setTeachers] = useState([]);
@@ -32,6 +33,16 @@ export default function TeacherPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!formData.lecName || !formData.email || !formData.password || !formData.tel) {
+      Swal.fire({
+        icon: "error",
+        title: "Validation Error",
+        text: "Please fill in all fields before submitting.",
+      });
+      return;
+    }
+
     const payload = {
       ...formData,
       tel: formData.tel ? formData.tel.split(",").map((t) => t.trim()) : [],
@@ -39,8 +50,22 @@ export default function TeacherPage() {
     if (editId) {
       await axios.put(`/api/teachers/${editId}`, payload);
       setEditId(null);
+      Swal.fire({
+        icon: "success",
+        title: "Updated!",
+        text: "Teacher updated successfully.",
+        timer: 1500,
+        showConfirmButton: false,
+      });
     } else {
       await axios.post("/api/teachers", payload);
+      Swal.fire({
+        icon: "success",
+        title: "Created!",
+        text: "Teacher created successfully.",
+        timer: 1500,
+        showConfirmButton: false,
+      });
     }
     setFormData({
       lecName: "",
@@ -62,8 +87,28 @@ export default function TeacherPage() {
   };
 
   const handleDelete = async (id) => {
-    await axios.delete(`/api/teachers/${id}`);
-    fetchTeachers();
+    const result = await Swal.fire({
+      title: "Are you sure?",
+      text: "You won't be able to revert this!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#6c757d",
+      confirmButtonText: "Yes, delete it!",
+      cancelButtonText: "Cancel",
+    });
+
+    if (result.isConfirmed) {
+      await axios.delete(`/api/teachers/${id}`);
+      fetchTeachers();
+      Swal.fire({
+        icon: "success",
+        title: "Deleted!",
+        text: "Teacher has been deleted.",
+        timer: 1500,
+        showConfirmButton: false,
+      });
+    }
   };
 
   return (
